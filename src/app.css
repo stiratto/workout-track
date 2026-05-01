@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --font-feature: "Feature Display", sans-serif;
+  --font-mono: "Space Mono", monospace;
+  --font-gallant: "Gallant", monospace;
+}
+
+@font-face {
+  font-family: "Feature Display";
+  src: url("./assets/fonts/FeatureDisplay-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Space Mono";
+  src: url("./assets/fonts/SpaceMono-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Gallant";
+  src: url("./assets/fonts/gallant12x22.ttf") format("truetype");
+}
+
+body {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-color: #161613;
+  color: white;
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  background-image: url("./assets/imggg.png");
+  opacity: 0.8;
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  background-size: 600px;
+}
+
+button.hover-effect:hover::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  position: absolute;
+  background-color: white;
+  left: 150px;
+}
