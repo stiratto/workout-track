@@ -6,7 +6,7 @@ export const Layout = ({
   return (
     <div
       className={
-        "px-2 py-4 flex flex-col items-center w-full h-screen font-gallant"
+        "px-2 py-4 flex flex-col items-center w-full font-gallant"
       }
     >
       {children}

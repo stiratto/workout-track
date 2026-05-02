@@ -1,17 +1,18 @@
 import { signal } from "@preact/signals";
-import { useEffect, useState } from "preact/hooks";
+import type { Exercise, Errors } from "../types";
 
-interface Exercise {
-  name: string;
-  sets: number;
-  reps: number;
-  lbs: number;
-}
+const errors = {
+  missingNums: "enter exercise, sets, reps, lbs",
+  notPositive: "sets, reps, lbs must be positive numbers",
+  format: "format: exercise sets reps lbs",
+};
 
 let setsSignal = signal(0);
 let repsSignal = signal(0);
 let lbsSignal = signal(0);
 let exerciseSignal = signal("bench press");
+let errorsSignal = signal<Errors>({});
+let exercisesSignal = signal<Exercise[]>([]);
 
 export const Home = () => {
   const onChange = (e: Event) => {
@@ -19,7 +20,11 @@ export const Home = () => {
 
     const length = value.split(" ").length;
     const data = value.split(" ").filter((item) => item !== "");
-    console.log(data);
+
+    if (data.length === 0) {
+      errorsSignal.value = {};
+      return;
+    }
 
     // if its greater than 4, the user wrote an exercise name with spaces (e.g: "incline bench press 3 10 100")
     if (length > 4) {
@@ -27,12 +32,28 @@ export const Home = () => {
       // loop and check if item is a string
       data.forEach((item, _) => isNaN(Number(item)) && exercise.push(item));
 
-      const [sets, reps, lbs] = data.filter((item) => !isNaN(Number(item)));
+      // extracts only the number items from the exercise
+      const nums = data.filter((item) => !isNaN(Number(item)));
+
+      if (nums.length !== 3 || nums.some(n => Number(n) <= 0)) {
+        errorsSignal.value = { input: errors.missingNums };
+        return;
+      }
+
+      const [sets, reps, lbs] = nums;
+      errorsSignal.value = {};
       updateSignals({ sets, reps, lbs, exercise: exercise.join(" ") });
     } else if (length === 4) {
       const [exercise, sets, reps, lbs] = data;
-
+      const nums = [sets, reps, lbs];
+      if (nums.some(n => isNaN(Number(n)) || Number(n) <= 0)) {
+        errorsSignal.value = { input: errors.notPositive };
+        return;
+      }
+      errorsSignal.value = {};
       updateSignals({ sets, reps, lbs, exercise });
+    } else {
+      errorsSignal.value = { input: errors.format };
     }
   };
 
@@ -54,16 +75,29 @@ export const Home = () => {
   };
 
 
-  const onSubmit = (e) => {
-    console.log(e.preventDefault())
-  }
+  const onSubmit = (e: Event) => {
+    e.preventDefault();
+    if (setsSignal.value === 0 && repsSignal.value === 0 && lbsSignal.value === 0) {
+      return;
+    }
+    exercisesSignal.value = [
+      ...exercisesSignal.value,
+      {
+        name: exerciseSignal.value,
+        sets: setsSignal.value,
+        reps: repsSignal.value,
+        lbs: lbsSignal.value,
+      },
+    ];
+    (e.target as HTMLFormElement).reset();
+  };
 
   return (
-    <header class="mb-8 pb-18 h-screen flex flex-col">
-      <div class="flex flex-col gap-24 h-full justify-center ">
+    <header class="mb-8 pb-18 flex flex-col">
+      <div class="flex flex-col gap-12 h-full justify-center ">
         <div>
           <h1 class="mb-4 text-2xl">
-            Track your workouts without the clutter.
+            Minimal gains.
           </h1>
           <p class="text-left mx-auto w-full">
             A clean, fast workout tracker focused on what actually matters:{" "}
@@ -79,6 +113,9 @@ export const Home = () => {
               class="px-2 py-4 border border-dashed w-full mt-2"
               onInput={onChange}
             />
+            {errorsSignal.value.input && (
+              <p class="text-red-500 text-sm mt-1">{errorsSignal.value.input}</p>
+            )}
             <button class="relative w-full border p-2 mt-2 hover-effect" type="submit">finish</button>
           </form>
 
@@ -99,6 +136,39 @@ export const Home = () => {
             </div>
           </div>
         </div>
+
+        <div class="flex justify-center">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M19 12l-7 7-7-7" />
+          </svg>
+        </div>
+
+        <table class="w-full mt-8 border">
+          <thead>
+            <tr class="border-b">
+              <th class="text-left p-2">exercise</th>
+              <th class="text-center p-2">sets</th>
+              <th class="text-center p-2">reps</th>
+              <th class="text-right p-2">lbs</th>
+            </tr>
+          </thead>
+          <tbody>
+            {exercisesSignal.value.length === 0 ? (
+              <tr>
+                <td colspan="4" class="text-center p-4 text-gray-500">no exercises yet</td>
+              </tr>
+            ) : (
+              exercisesSignal.value.map((ex, i) => (
+                <tr key={i} class="border-b">
+                  <td class="p-2">{ex.name}</td>
+                  <td class="text-center p-2">{ex.sets}</td>
+                  <td class="text-center p-2">{ex.reps}</td>
+                  <td class="text-right p-2">{ex.lbs}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </header>
   );
