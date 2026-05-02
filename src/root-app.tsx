@@ -3,8 +3,9 @@ import { ErrorBoundary, LocationProvider, Route, Router } from "preact-iso";
 import { Home } from "./pages/Home";
 import { About } from "./pages/About";
 import { Layout } from "./layouts/Layout";
+import { App } from "./pages/App";
 
-export function App() {
+export function RootApp() {
   return (
     <LocationProvider>
       <ErrorBoundary>
@@ -12,6 +13,7 @@ export function App() {
           <Router>
             <Route path="/" component={Home} />
             <Route path="/about" component={About} />
+            <Route path="/app" component={App} />
           </Router>
         </Layout>
       </ErrorBoundary>

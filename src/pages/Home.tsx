@@ -1,6 +1,9 @@
 import { signal } from "@preact/signals";
 import type { Exercise, Errors } from "../types";
 import { validateNums, errorMessages } from "../helper";
+import { Button } from "../components/Button";
+import { Input } from "../components/Input";
+import { Table } from "../components/Table";
 
 let setsSignal = signal(0);
 let repsSignal = signal(0);
@@ -82,6 +85,9 @@ export const Home = () => {
     e.preventDefault();
     if (errorsSignal.value.input?.length ?? 0 > 0) return
 
+    if (setsSignal.value === 0 && repsSignal.value === 0 && lbsSignal.value === 0) {
+      return;
+    }
     exercisesSignal.value = [
       ...exercisesSignal.value,
       {
@@ -96,8 +102,8 @@ export const Home = () => {
 
   return (
     <header class="mb-8 pb-18 flex flex-col">
-      <div class="flex flex-col gap-12 h-full justify-center ">
-        <div>
+      <div class="flex flex-col gap-12 h-full justify-center">
+        <div class="h-[40vh] flex flex-col ">
           <h1 class="mb-4 text-2xl">
             Track your workout without the clutter.
           </h1>
@@ -105,20 +111,23 @@ export const Home = () => {
             A clean, fast workout tracker focused on what actually matters:{" "}
             <span class="">your progress.</span>
           </p>
+          <a href="/app">
+            <Button className="w-max">I want it</Button>
+          </a>
         </div>
         <div class="">
           <form class="relative w-full" onSubmit={onSubmit}>
             <span class="lowercase">-- Try it </span>
-            <input
+            <Input
               name="try"
               placeholder="e.g: bench press 3 10 100"
-              class="px-2 py-4 border border-dashed w-full mt-2 max-w-lg"
+              className="max-w-lg"
               onInput={onChange}
             />
             {errorsSignal.value.input && (
               <p class="text-red-500 text-sm mt-1">{errorsSignal.value.input}</p>
             )}
-            <button class="relative w-full border p-2 mt-2 hover-effect" type="submit">finish</button>
+            <Button type="submit">finish</Button>
           </form>
 
           <div class="flex justify-around border mt-4 p-2 items-center border-dashed">
@@ -145,32 +154,7 @@ export const Home = () => {
           </svg>
         </div>
 
-        <table class="w-full mt-8 border">
-          <thead>
-            <tr class="border-b">
-              <th class="text-left p-2">exercise</th>
-              <th class="text-center p-2">sets</th>
-              <th class="text-center p-2">reps</th>
-              <th class="text-right p-2">lbs</th>
-            </tr>
-          </thead>
-          <tbody>
-            {exercisesSignal.value.length === 0 ? (
-              <tr>
-                <td colspan={4} class="text-center p-4 text-gray-500">no exercises yet</td>
-              </tr>
-            ) : (
-              exercisesSignal.value.map((ex, i) => (
-                <tr key={i} class="border-b">
-                  <td class="p-2">{ex.name}</td>
-                  <td class="text-center p-2">{ex.sets}</td>
-                  <td class="text-center p-2">{ex.reps}</td>
-                  <td class="text-right p-2">{ex.lbs}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <Table exercises={exercisesSignal.value} />
       </div>
     </header>
   );
