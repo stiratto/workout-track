@@ -1,11 +1,6 @@
 import { signal } from "@preact/signals";
 import type { Exercise, Errors } from "../types";
-
-const errors = {
-  missingNums: "enter exercise, sets, reps, lbs",
-  notPositive: "sets, reps, lbs must be positive numbers",
-  format: "format: exercise sets reps lbs",
-};
+import { validateNums, errorMessages } from "../helper";
 
 let setsSignal = signal(0);
 let repsSignal = signal(0);
@@ -35,8 +30,15 @@ export const Home = () => {
       // extracts only the number items from the exercise
       const nums = data.filter((item) => !isNaN(Number(item)));
 
-      if (nums.length !== 3 || nums.some(n => Number(n) <= 0)) {
-        errorsSignal.value = { input: errors.missingNums };
+
+      if (nums.length !== 3) {
+        errorsSignal.value = { input: errorMessages.missingNums };
+        return;
+      }
+
+      const err = validateNums(nums);
+      if (err) {
+        errorsSignal.value = { input: err };
         return;
       }
 
@@ -46,14 +48,15 @@ export const Home = () => {
     } else if (length === 4) {
       const [exercise, sets, reps, lbs] = data;
       const nums = [sets, reps, lbs];
-      if (nums.some(n => isNaN(Number(n)) || Number(n) <= 0)) {
-        errorsSignal.value = { input: errors.notPositive };
+      const err = validateNums(nums);
+      if (err) {
+        errorsSignal.value = { input: err };
         return;
       }
       errorsSignal.value = {};
       updateSignals({ sets, reps, lbs, exercise });
     } else {
-      errorsSignal.value = { input: errors.format };
+      errorsSignal.value = { input: errorMessages.format };
     }
   };
 
@@ -77,9 +80,8 @@ export const Home = () => {
 
   const onSubmit = (e: Event) => {
     e.preventDefault();
-    if (setsSignal.value === 0 && repsSignal.value === 0 && lbsSignal.value === 0) {
-      return;
-    }
+    if (errorsSignal.value.input?.length ?? 0 > 0) return
+
     exercisesSignal.value = [
       ...exercisesSignal.value,
       {
@@ -97,7 +99,7 @@ export const Home = () => {
       <div class="flex flex-col gap-12 h-full justify-center ">
         <div>
           <h1 class="mb-4 text-2xl">
-            Minimal gains.
+            Track your workout without the clutter.
           </h1>
           <p class="text-left mx-auto w-full">
             A clean, fast workout tracker focused on what actually matters:{" "}
@@ -110,7 +112,7 @@ export const Home = () => {
             <input
               name="try"
               placeholder="e.g: bench press 3 10 100"
-              class="px-2 py-4 border border-dashed w-full mt-2"
+              class="px-2 py-4 border border-dashed w-full mt-2 max-w-lg"
               onInput={onChange}
             />
             {errorsSignal.value.input && (
@@ -122,16 +124,16 @@ export const Home = () => {
           <div class="flex justify-around border mt-4 p-2 items-center border-dashed">
             <p class="w-24 break-all">{exerciseSignal.value}</p>
             <div class="flex flex-col gap-1 text-center">
-              <p class="text-lg">[{setsSignal.value}]</p>
+              <p class="text-lg truncate max-w-24">[{setsSignal.value}]</p>
               <p class="uppercase bold text-xs">sets</p>
             </div>
 
             <div class="flex flex-col gap-1 text-center">
-              <p class="text-lg">[{repsSignal.value}]</p>
+              <p class="text-lg truncate max-w-24">[{repsSignal.value}]</p>
               <p class="uppercase bold text-xs">reps</p>
             </div>
             <div class="flex flex-col gap-1 text-center">
-              <p class="text-lg">[{lbsSignal.value}]</p>
+              <p class="text-lg truncate max-w-24">[{lbsSignal.value}]</p>
               <p class="uppercase bold text-xs">lbs</p>
             </div>
           </div>
@@ -155,7 +157,7 @@ export const Home = () => {
           <tbody>
             {exercisesSignal.value.length === 0 ? (
               <tr>
-                <td colspan="4" class="text-center p-4 text-gray-500">no exercises yet</td>
+                <td colspan={4} class="text-center p-4 text-gray-500">no exercises yet</td>
               </tr>
             ) : (
               exercisesSignal.value.map((ex, i) => (
